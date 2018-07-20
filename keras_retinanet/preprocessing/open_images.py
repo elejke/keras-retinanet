@@ -34,6 +34,8 @@ def load_hierarchy(metadata_dir, version='v4'):
         hierarchy = 'bbox_labels_500_hierarchy.json'
     elif version == 'v4':
         hierarchy = 'bbox_labels_600_hierarchy.json'
+    elif version == 'vv4':
+        hierarchy = 'bbox_labels_600_hierarchy.json'
     elif version == 'v3':
         hierarchy = 'bbox_labels_600_hierarchy.json'
 
@@ -200,7 +202,7 @@ def generate_images_annotations_json(main_dir, metadata_dir, subset, cls_index, 
                 # This is preferable over using the V4 val/test sets, as the training set is more densely annotated.
                 img_path = os.path.join(main_dir, 'images', 'train', frame + '.jpg')
             else:
-                img_path = os.path.join(main_dir, 'images', subset, frame + '.jpg')
+                img_path = os.path.join(main_dir, 'images', subset, frame)
 
             if frame in images_sizes:
                 width, height = images_sizes[frame]
