@@ -20,6 +20,8 @@ import os
 import warnings
 
 import numpy as np
+import pandas as pd
+
 from PIL import Image
 
 from .generator import Generator
@@ -68,6 +70,7 @@ def find_hierarchy_parent(hierarchy, parent_cls):
 
 
 def get_labels(metadata_dir, version='v4'):
+    version = version if version != "vv4" else "v4"
     if version == 'v4' or version == 'challenge2018':
         csv_file = 'class-descriptions-boxable.csv' if version == 'v4' else 'challenge-2018-class-descriptions-500.csv'
 
@@ -107,11 +110,47 @@ def get_labels(metadata_dir, version='v4'):
     return id_to_labels, cls_index
 
 
+# generator for precomputed width and height files in OID style:
+def generate_images_annotations_json_vv4(metadata_dir, subset, cls_index):
+    """
+    Generator for vv4 (@vovacher) style datasets.
+
+    Args:
+        metadata_dir: path to the metadata directory.
+        subset: descriptor of the subset - one of the {"train", "validation", "test"}
+        cls_index: dictionary with mapping from class names to it's indexes
+
+    Return:
+        dict with annotations in format: {"image_id" : {"w" : img_width,
+                                                        "h" : img_height,
+                                                        "boxes" : {["x1": XMin, "x2": XMax, ...],
+                                                                   ["x1": XMin, "x2": XMax, ...]}}}
+    """
+
+    annotations_path = os.path.join(metadata_dir, subset, '{}-annotations-bbox.csv'.format(subset))
+    df_annotations = pd.read_csv(annotations_path)
+
+    df_annotations = df_annotations[["ImageID", "LabelName", "XMin", "XMax", "YMin", "YMax", "Width", "Height"]]
+    df_annotations.columns = ["ImageID", "cls_id", "x1", "x2", "y1", "y2", "w", "h"]
+    df_annotations["cls_id"] = df_annotations.cls_id.apply(lambda class_name: cls_index.get(class_name, class_name))
+
+    df_annotations["annotation"] = df_annotations[["cls_id", "x1", "x2", "y1", "y2"]].T.apply(dict)
+
+    df_final = df_annotations.groupby("ImageID")[["w", "h"]].mean()
+    df_final["boxes"] = df_annotations.groupby("ImageID").annotation.apply(list)
+
+    id_annotations = df_final.T.to_dict()
+
+    return id_annotations
+
+
 def generate_images_annotations_json(main_dir, metadata_dir, subset, cls_index, version='v4'):
     validation_image_ids = {}
 
     if version == 'v4':
         annotations_path = os.path.join(metadata_dir, subset, '{}-annotations-bbox.csv'.format(subset))
+    elif version == 'vv4':
+        return generate_images_annotations_json_vv4(metadata_dir, subset, cls_index)
     elif version == 'challenge2018':
         validation_image_ids_path = os.path.join(metadata_dir, 'challenge-2018-image-ids-valset-od.csv')
 
