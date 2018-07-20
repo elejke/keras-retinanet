@@ -260,6 +260,8 @@ class OpenImagesGenerator(Generator):
             metadata = 'challenge2018'
         elif version == 'v4':
             metadata = '2018_04'
+        elif version == 'vv4':
+            metadata = '2018_04'
         elif version == 'v3':
             metadata = '2017_11'
         else:
