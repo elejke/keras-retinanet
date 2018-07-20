@@ -143,8 +143,6 @@ def generate_images_annotations_json_vv4(metadata_dir, subset, cls_index):
 
     id_annotations = df_final.T.to_dict()
 
-    print(id_annotations)
-
     return id_annotations
 
 
@@ -382,7 +380,9 @@ class OpenImagesGenerator(Generator):
         return float(width) / float(height)
 
     def image_path(self, image_index):
-        path = os.path.join(self.base_dir, self.id_to_image_id[image_index] + '.jpg')
+        # fixes for vv4:
+        path = os.path.join(self.base_dir, self.id_to_image_id[image_index])
+        # path = os.path.join(self.base_dir, self.id_to_image_id[image_index] + '.jpg')
         return path
 
     def load_image(self, image_index):
