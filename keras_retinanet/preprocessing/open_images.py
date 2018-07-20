@@ -150,7 +150,8 @@ def generate_images_annotations_json(main_dir, metadata_dir, subset, cls_index, 
     validation_image_ids = {}
 
     if version == 'v4':
-        annotations_path = os.path.join(metadata_dir, subset, '{}-annotations-bbox.csv'.format(subset))
+        # annotations_path = os.path.join(metadata_dir, subset, '{}-annotations-bbox.csv'.format(subset))
+        return generate_images_annotations_json_vv4(metadata_dir, subset, cls_index)
     elif version == 'vv4':
         return generate_images_annotations_json_vv4(metadata_dir, subset, cls_index)
     elif version == 'challenge2018':
@@ -202,7 +203,7 @@ def generate_images_annotations_json(main_dir, metadata_dir, subset, cls_index, 
                 # This is preferable over using the V4 val/test sets, as the training set is more densely annotated.
                 img_path = os.path.join(main_dir, 'images', 'train', frame + '.jpg')
             else:
-                img_path = os.path.join(main_dir, 'images', subset, frame)
+                img_path = os.path.join(main_dir, 'images', subset, frame + '.jpg')
 
             if frame in images_sizes:
                 width, height = images_sizes[frame]
