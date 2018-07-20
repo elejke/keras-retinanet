@@ -143,6 +143,8 @@ def generate_images_annotations_json_vv4(metadata_dir, subset, cls_index):
 
     id_annotations = df_final.T.to_dict()
 
+    print(id_annotations)
+
     return id_annotations
 
 
