@@ -35,7 +35,7 @@ def load_hierarchy(metadata_dir, version='v4'):
     elif version == 'v4':
         hierarchy = 'bbox_labels_600_hierarchy.json'
     elif version == 'vv4':
-        hierarchy = 'bbox_labels_600_hierarchy.json'
+        hierarchy = 'bbox_labels_hierarchy.json'
     elif version == 'v3':
         hierarchy = 'bbox_labels_600_hierarchy.json'
 
@@ -72,9 +72,8 @@ def find_hierarchy_parent(hierarchy, parent_cls):
 
 
 def get_labels(metadata_dir, version='v4'):
-    version = version if version != "vv4" else "v4"
-    if version == 'v4' or version == 'challenge2018':
-        csv_file = 'class-descriptions-boxable.csv' if version == 'v4' else 'challenge-2018-class-descriptions-500.csv'
+    if version == 'v4' or version == 'vv4' or version == 'challenge2018':
+        csv_file = 'challenge-2018-class-descriptions-500.csv' if version == 'challenge2018' else 'class-descriptions-boxable.csv'
 
         boxable_classes_descriptions = os.path.join(metadata_dir, csv_file)
         id_to_labels = {}
@@ -150,8 +149,7 @@ def generate_images_annotations_json(main_dir, metadata_dir, subset, cls_index, 
     validation_image_ids = {}
 
     if version == 'v4':
-        # annotations_path = os.path.join(metadata_dir, subset, '{}-annotations-bbox.csv'.format(subset))
-        return generate_images_annotations_json_vv4(metadata_dir, subset, cls_index)
+        annotations_path = os.path.join(metadata_dir, subset, '{}-annotations-bbox.csv'.format(subset))
     elif version == 'vv4':
         return generate_images_annotations_json_vv4(metadata_dir, subset, cls_index)
     elif version == 'challenge2018':
@@ -259,12 +257,14 @@ class OpenImagesGenerator(Generator):
             parent_label=None,
             **kwargs
     ):
+        self.version = version
+        
         if version == 'challenge2018':
             metadata = 'challenge2018'
         elif version == 'v4':
             metadata = '2018_04'
         elif version == 'vv4':
-            metadata = '2018_04'
+            metadata = 'annotations'
         elif version == 'v3':
             metadata = '2017_11'
         else:
@@ -381,8 +381,10 @@ class OpenImagesGenerator(Generator):
 
     def image_path(self, image_index):
         # fixes for vv4:
-        path = os.path.join(self.base_dir, self.id_to_image_id[image_index])
-        # path = os.path.join(self.base_dir, self.id_to_image_id[image_index] + '.jpg')
+        if self.version == "vv4":
+            path = os.path.join(self.base_dir, self.id_to_image_id[image_index])
+        else:
+            path = os.path.join(self.base_dir, self.id_to_image_id[image_index] + '.jpg')
         return path
 
     def load_image(self, image_index):
