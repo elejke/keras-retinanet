@@ -33,7 +33,7 @@ def read_image_bgr(path, jpeg_reader=None):
         image = np.asarray(Image.open(path).convert('RGB'))[:, :, ::-1]
     else:
         in_file = open(path, "rb")
-        image = jpeg_reader.decode(in_file.read(), 0)
+        image = jpeg_reader.decode(in_file.read(), 1)
         in_file.close()
     return image
 
