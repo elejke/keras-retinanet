@@ -23,14 +23,19 @@ from PIL import Image
 from .transform import change_transform_origin
 
 
-def read_image_bgr(path):
+def read_image_bgr(path, jpeg_reader=None):
     """ Read an image in BGR format.
 
     Args
         path: Path to the image.
     """
-    image = np.asarray(Image.open(path).convert('RGB'))
-    return image[:, :, ::-1].copy()
+    if jpeg_reader is None:
+        image = np.asarray(Image.open(path).convert('RGB'))[:, :, ::-1]
+    else:
+        in_file = open(path, "rb")
+        image = jpeg_reader.decode(in_file.read(), 0)
+        in_file.close()
+    return image
 
 
 def preprocess_image(x, mode='caffe'):

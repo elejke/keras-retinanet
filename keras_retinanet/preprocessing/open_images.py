@@ -254,10 +254,11 @@ class OpenImagesGenerator(Generator):
     def __init__(
             self, main_dir, subset, version='v4',
             labels_filter=None, annotation_cache_dir='.',
-            parent_label=None,
+            parent_label=None, use_jpeg_turbo=False, 
             **kwargs
     ):
         self.version = version
+        self.use_jpeg_turbo = use_jpeg_turbo
         
         if version == 'challenge2018':
             metadata = 'challenge2018'
@@ -294,6 +295,12 @@ class OpenImagesGenerator(Generator):
             self.id_to_labels = id_to_labels
 
         self.id_to_image_id = dict([(i, k) for i, k in enumerate(self.annotations)])
+        
+        if use_jpeg_turbo:
+            from turbojpeg import TurboJPEG
+            self._reader = TurboJPEG()
+        else:
+            self._reader = None
 
         super(OpenImagesGenerator, self).__init__(**kwargs)
 
@@ -388,7 +395,7 @@ class OpenImagesGenerator(Generator):
         return path
 
     def load_image(self, image_index):
-        return read_image_bgr(self.image_path(image_index))
+        return read_image_bgr(self.image_path(image_index), self._reader)
 
     def load_annotations(self, image_index):
         image_annotations = self.annotations[self.id_to_image_id[image_index]]
