@@ -213,8 +213,13 @@ class Generator(object):
     def group_images(self):
         """ Order the images according to self.order and makes groups of self.batch_size.
         """
-        groups_path = os.path.join(self.generator_restore_path, "groups_at_checkpoint.dump")
-        group_index_path = os.path.join(self.generator_restore_path, "group_index_at_checkpoint.dump")
+
+        if self.generator_restore_path is not None:
+            groups_path = os.path.join(self.generator_restore_path, "groups_at_checkpoint.dump")
+            group_index_path = os.path.join(self.generator_restore_path, "group_index_at_checkpoint.dump")
+        else:
+            groups_path = None
+            group_index_path = None
 
         if ((self.generator_restore_path is None) or 
             (not os.path.exists(groups_path)) or
