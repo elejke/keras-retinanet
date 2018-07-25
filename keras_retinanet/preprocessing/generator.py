@@ -213,9 +213,12 @@ class Generator(object):
     def group_images(self):
         """ Order the images according to self.order and makes groups of self.batch_size.
         """
-        if (self.restore_path is None) or 
-           (not os.path.exists(os.path.join(self.restore_path, "groups.dump"))) or
-           (not os.path.exists(os.path.join(self.restore_path, "group_index.dump"))):
+        groups_path = os.path.join(self.restore_path, "groups_at_checkpoint.dump")
+        group_index_path = os.path.join(self.restore_path, "group_index_at_checkpoint.dump")
+
+        if ((self.restore_path is None) or 
+            (not os.path.exists(groups_path)) or
+            (not os.path.exists(group_index_path))):
             # determine the order of the images
             order = list(range(self.size()))
             if self.group_method == 'random':
@@ -224,11 +227,13 @@ class Generator(object):
                 order.sort(key=lambda x: self.image_aspect_ratio(x))
 
             # divide into groups, one group = one batch
-            self.groups = [[order[x % len(order)] for x in range(i, i + self.batch_size)] for i in range(0, len(order), self.batch_size)]
+            self.groups = [[order[x % len(order)] 
+                            for x in range(i, i + self.batch_size)] 
+                           for i in range(0, len(order), self.batch_size)]
             self.group_index = 0
         else:
-            self.groups = pickle.load(open(os.path.join(self.restore_path, "groups.dump"), "rb"))
-            self.group_index = pickle.load(open(os.path.join(self.restore_path, "group_index.dump"), "rb"))
+            self.groups = pickle.load(open(groups_path, "rb"))
+            self.group_index = pickle.load(open(group_index_path, "rb"))
 
     def compute_inputs(self, image_group):
         """ Compute inputs for the network using an image_group.
