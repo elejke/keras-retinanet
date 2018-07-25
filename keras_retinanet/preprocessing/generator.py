@@ -18,6 +18,7 @@ import numpy as np
 import random
 import threading
 import warnings
+import os
 
 import keras
 
@@ -51,7 +52,8 @@ class Generator(object):
         transform_parameters=None,
         compute_anchor_targets=anchor_targets_bbox,
         compute_shapes=guess_shapes,
-        preprocess_image=preprocess_image,
+        preprocess_image=preprocess_image, 
+        restore_path=None
     ):
         """ Initialize Generator object.
 
@@ -77,6 +79,7 @@ class Generator(object):
         self.compute_anchor_targets = compute_anchor_targets
         self.compute_shapes         = compute_shapes
         self.preprocess_image       = preprocess_image
+        self.restore_path           = restore_path
 
         self.group_index = 0
         self.lock        = threading.Lock()
@@ -209,15 +212,22 @@ class Generator(object):
     def group_images(self):
         """ Order the images according to self.order and makes groups of self.batch_size.
         """
-        # determine the order of the images
-        order = list(range(self.size()))
-        if self.group_method == 'random':
-            random.shuffle(order)
-        elif self.group_method == 'ratio':
-            order.sort(key=lambda x: self.image_aspect_ratio(x))
+        if (self.restore_path is None) or 
+           (not os.path.exists(os.path.join(self.restore_path, "groups.dump"))) or
+           (not os.path.exists(os.path.join(self.restore_path, "group_index.dump"))):
+            # determine the order of the images
+            order = list(range(self.size()))
+            if self.group_method == 'random':
+                random.shuffle(order)
+            elif self.group_method == 'ratio':
+                order.sort(key=lambda x: self.image_aspect_ratio(x))
 
-        # divide into groups, one group = one batch
-        self.groups = [[order[x % len(order)] for x in range(i, i + self.batch_size)] for i in range(0, len(order), self.batch_size)]
+            # divide into groups, one group = one batch
+            self.groups = [[order[x % len(order)] for x in range(i, i + self.batch_size)] for i in range(0, len(order), self.batch_size)]
+            self.group_index = 0
+        else:
+            self.groups = pickle.load(open(os.path.join(self.restore_path, "groups.dump"), "rb"))
+            self.group_index = pickle.load(open(os.path.join(self.restore_path, "group_index.dump"), "rb"))
 
     def compute_inputs(self, image_group):
         """ Compute inputs for the network using an image_group.
@@ -283,7 +293,12 @@ class Generator(object):
             if self.group_index == 0 and self.shuffle_groups:
                 # shuffle groups at start of epoch
                 random.shuffle(self.groups)
+                if self.restore_path is not None:
+                    pickle.dump(self.groups, open(os.path.join(self.restore_path, "groups.dump"), "wb"))
+
             group = self.groups[self.group_index]
             self.group_index = (self.group_index + 1) % len(self.groups)
+            if self.restore_path is not None:
+                pickle.dump(self.group_index, open(os.path.join(self.restore_path, "group_index.dump"), "wb"))
 
         return self.compute_input_output(group)
