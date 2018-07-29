@@ -73,21 +73,22 @@ def find_hierarchy_parent(hierarchy, parent_cls):
 
 def get_labels(metadata_dir, version='v4'):
     if version == 'v4' or version == 'vv4' or version == 'challenge2018':
-        csv_file = 'challenge-2018-class-descriptions-500.csv' if version == 'challenge2018' else 'class-descriptions-boxable.csv'
+        csv_file = 'challenge-2018-class-descriptions-500.csv' if (version == 'challenge2018') \
+                                                               else 'class-descriptions-boxable.csv'
 
         boxable_classes_descriptions = os.path.join(metadata_dir, csv_file)
         id_to_labels = {}
-        cls_index    = {}
+        cls_index = {}
 
         i = 0
         with open(boxable_classes_descriptions) as f:
             for row in csv.reader(f):
                 # make sure the csv row is not empty (usually the last one)
                 if len(row):
-                    label       = row[0]
+                    label = row[0]
                     description = row[1].replace("\"", "").replace("'", "").replace('`', '')
 
-                    id_to_labels[i]  = description
+                    id_to_labels[i] = description
                     cls_index[label] = i
 
                     i += 1
@@ -112,24 +113,36 @@ def get_labels(metadata_dir, version='v4'):
 
 
 # generator for precomputed width and height files in OID style:
-def generate_images_annotations_json_vv4(metadata_dir, subset, cls_index):
+def generate_images_annotations_json_vv4(metadata_dir, subset, cls_index, version='vv4'):
     """
     Generator for vv4 (@vovacher) style datasets.
 
     Args:
-        metadata_dir: path to the metadata directory.
-        subset: descriptor of the subset - one of the {"train", "validation", "test"}
-        cls_index: dictionary with mapping from class names to it's indexes
+        metadata_dir(str): path to the metadata directory.
+        subset(str): descriptor of the subset - one of the {"train", "validation", "test"}
+        cls_index(dict): dictionary with mapping from class names to it's indexes
+        version(str): type of the OID dataset partition.
 
     Return:
         dict with annotations in format: {"image_id" : {"w" : img_width,
                                                         "h" : img_height,
-                                                        "boxes" : {["x1": XMin, "x2": XMax, ...],
-                                                                   ["x1": XMin, "x2": XMax, ...]}}}
+                                                        "boxes" : [{"x1": XMin, "x2": XMax, ...},
+                                                                   {"x1": XMin, "x2": XMax, ...}]}}
     """
 
-    annotations_path = os.path.join(metadata_dir, subset, '{}-annotations-bbox.csv'.format(subset))
-    df_annotations = pd.read_csv(annotations_path)
+    if version == 'challenge2018':
+        annotations_path = os.path.join(metadata_dir, 'challenge-2018-train-annotations-bbox.csv')
+        # read the whole annotations for challenge2018
+        df_annotations = pd.read_csv(annotations_path)
+        #
+        if subset == "validation":
+            val_set = pd.read_csv(os.path.join(metadata_dir, 'challenge-2018-image-ids-valset-od.csv'))
+            df_annotations = df_annotations.set_index('ImageID').loc[val_set.ImageID.values]
+    elif version == 'vv4':
+        annotations_path = os.path.join(metadata_dir, subset, '{}-annotations-bbox.csv'.format(subset))
+        df_annotations = pd.read_csv(annotations_path)
+    else:
+        raise NotImplementedError
 
     df_annotations = df_annotations[["ImageID", "LabelName", "XMin", "XMax", "YMin", "YMax", "Width", "Height"]]
     df_annotations.columns = ["ImageID", "cls_id", "x1", "x2", "y1", "y2", "w", "h"]
@@ -151,18 +164,19 @@ def generate_images_annotations_json(main_dir, metadata_dir, subset, cls_index, 
     if version == 'v4':
         annotations_path = os.path.join(metadata_dir, subset, '{}-annotations-bbox.csv'.format(subset))
     elif version == 'vv4':
-        return generate_images_annotations_json_vv4(metadata_dir, subset, cls_index)
+        return generate_images_annotations_json_vv4(metadata_dir, subset, cls_index, version=version)
     elif version == 'challenge2018':
-        validation_image_ids_path = os.path.join(metadata_dir, 'challenge-2018-image-ids-valset-od.csv')
-
-        with open(validation_image_ids_path, 'r') as csv_file:
-            reader = csv.DictReader(csv_file, fieldnames=['ImageID'])
-            next(reader)
-            for line, row in enumerate(reader):
-                image_id = row['ImageID']
-                validation_image_ids[image_id] = True
-
-        annotations_path = os.path.join(metadata_dir, 'challenge-2018-train-annotations-bbox.csv')
+        return generate_images_annotations_json_vv4(metadata_dir, subset, cls_index, version=version)
+        # validation_image_ids_path = os.path.join(metadata_dir, 'challenge-2018-image-ids-valset-od.csv')
+        #
+        # with open(validation_image_ids_path, 'r') as csv_file:
+        #     reader = csv.DictReader(csv_file, fieldnames=['ImageID'])
+        #     next(reader)
+        #     for line, row in enumerate(reader):
+        #         image_id = row['ImageID']
+        #         validation_image_ids[image_id] = True
+        #
+        # annotations_path = os.path.join(metadata_dir, 'challenge-2018-train-annotations-bbox.csv')
     else:
         annotations_path = os.path.join(metadata_dir, subset, 'annotations-human-bbox.csv')
 
@@ -254,12 +268,12 @@ class OpenImagesGenerator(Generator):
     def __init__(
             self, main_dir, subset, version='v4',
             labels_filter=None, annotation_cache_dir='.',
-            parent_label=None, use_jpeg_turbo=False, 
+            parent_label=None, use_jpeg_turbo=False,
             **kwargs
     ):
         self.version = version
         self.use_jpeg_turbo = use_jpeg_turbo
-        
+
         if version == 'challenge2018':
             metadata = 'challenge2018'
         elif version == 'v4':
@@ -272,30 +286,32 @@ class OpenImagesGenerator(Generator):
             raise NotImplementedError('There is currently no implementation for versions older than v3')
 
         if version == 'challenge2018':
-            self.base_dir     = os.path.join(main_dir, 'images', 'train')
+            self.base_dir = os.path.join(main_dir, 'images', 'train')
         else:
-            self.base_dir     = os.path.join(main_dir, 'images', subset)
+            self.base_dir = os.path.join(main_dir, 'images', subset)
 
-        metadata_dir          = os.path.join(main_dir, metadata)
+        metadata_dir = os.path.join(main_dir, metadata)
         annotation_cache_json = os.path.join(annotation_cache_dir, subset + '.json')
 
-        self.hierarchy          = load_hierarchy(metadata_dir, version=version)
+        self.hierarchy = load_hierarchy(metadata_dir, version=version)
         id_to_labels, cls_index = get_labels(metadata_dir, version=version)
 
         if os.path.exists(annotation_cache_json):
             with open(annotation_cache_json, 'r') as f:
                 self.annotations = json.loads(f.read())
         else:
-            self.annotations = generate_images_annotations_json(main_dir, metadata_dir, subset, cls_index, version=version)
+            self.annotations = generate_images_annotations_json(main_dir, metadata_dir, subset, cls_index,
+                                                                version=version)
             json.dump(self.annotations, open(annotation_cache_json, "w"))
 
         if labels_filter is not None or parent_label is not None:
-            self.id_to_labels, self.annotations = self.__filter_data(id_to_labels, cls_index, labels_filter, parent_label)
+            self.id_to_labels, self.annotations = self.__filter_data(id_to_labels, cls_index, labels_filter,
+                                                                     parent_label)
         else:
             self.id_to_labels = id_to_labels
 
         self.id_to_image_id = dict([(i, k) for i, k in enumerate(self.annotations)])
-        
+
         if use_jpeg_turbo:
             from turbojpeg import TurboJPEG
             self._reader = TurboJPEG()

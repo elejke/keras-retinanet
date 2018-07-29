@@ -43,18 +43,18 @@ class Generator(object):
     """
 
     def __init__(
-        self,
-        transform_generator = None,
-        batch_size=1,
-        group_method='ratio',  # one of 'none', 'random', 'ratio'
-        shuffle_groups=True,
-        image_min_side=800,
-        image_max_side=1333,
-        transform_parameters=None,
-        compute_anchor_targets=anchor_targets_bbox,
-        compute_shapes=guess_shapes,
-        preprocess_image=preprocess_image, 
-        generator_restore_path=None
+            self,
+            transform_generator=None,
+            batch_size=1,
+            group_method='ratio',  # one of 'none', 'random', 'ratio'
+            shuffle_groups=True,
+            image_min_side=800,
+            image_max_side=1333,
+            transform_parameters=None,
+            compute_anchor_targets=anchor_targets_bbox,
+            compute_shapes=guess_shapes,
+            preprocess_image=preprocess_image,
+            generator_restore_path=None
     ):
         """ Initialize Generator object.
 
@@ -70,20 +70,20 @@ class Generator(object):
             compute_shapes         : Function handler for computing the shapes of the pyramid for a given input.
             preprocess_image       : Function handler for preprocessing an image (scaling / normalizing) for passing through a network.
         """
-        self.transform_generator    = transform_generator
-        self.batch_size             = int(batch_size)
-        self.group_method           = group_method
-        self.shuffle_groups         = shuffle_groups
-        self.image_min_side         = image_min_side
-        self.image_max_side         = image_max_side
-        self.transform_parameters   = transform_parameters or TransformParameters()
+        self.transform_generator = transform_generator
+        self.batch_size = int(batch_size)
+        self.group_method = group_method
+        self.shuffle_groups = shuffle_groups
+        self.image_min_side = image_min_side
+        self.image_max_side = image_max_side
+        self.transform_parameters = transform_parameters or TransformParameters()
         self.compute_anchor_targets = compute_anchor_targets
-        self.compute_shapes         = compute_shapes
-        self.preprocess_image       = preprocess_image
+        self.compute_shapes = compute_shapes
+        self.preprocess_image = preprocess_image
         self.generator_restore_path = generator_restore_path
 
         self.group_index = 0
-        self.lock        = threading.Lock()
+        self.lock = threading.Lock()
 
         self.group_images()
 
@@ -132,7 +132,9 @@ class Generator(object):
         """
         # test all annotations
         for index, (image, annotations) in enumerate(zip(image_group, annotations_group)):
-            assert(isinstance(annotations, np.ndarray)), '\'load_annotations\' should return a list of numpy arrays, received: {}'.format(type(annotations))
+            assert (isinstance(annotations,
+                               np.ndarray)), '\'load_annotations\' should return a list of numpy arrays, received: {}'.format(
+                type(annotations))
 
             # test x2 < x1 | y2 < y1 | x1 < 0 | y1 < 0 | x2 <= 0 | y2 <= 0 | x2 >= image.shape[1] | y2 >= image.shape[0]
             invalid_indices = np.where(
@@ -165,8 +167,9 @@ class Generator(object):
         """
         # randomly transform both image and annotations
         if self.transform_generator:
-            transform = adjust_transform_for_image(next(self.transform_generator), image, self.transform_parameters.relative_translation)
-            image     = apply_transform(transform, image, self.transform_parameters)
+            transform = adjust_transform_for_image(next(self.transform_generator), image,
+                                                   self.transform_parameters.relative_translation)
+            image = apply_transform(transform, image, self.transform_parameters)
 
             # Transform the bounding boxes in the annotations.
             annotations = annotations.copy()
@@ -205,7 +208,7 @@ class Generator(object):
             image, annotations = self.preprocess_group_entry(image, annotations)
 
             # copy processed data back to group
-            image_group[index]       = image
+            image_group[index] = image
             annotations_group[index] = annotations
 
         return image_group, annotations_group
@@ -221,9 +224,9 @@ class Generator(object):
             groups_path = None
             group_index_path = None
 
-        if ((self.generator_restore_path is None) or 
-            (not os.path.exists(groups_path)) or
-            (not os.path.exists(group_index_path))):
+        if ((self.generator_restore_path is None) or
+                (not os.path.exists(groups_path)) or
+                (not os.path.exists(group_index_path))):
             # determine the order of the images
             order = list(range(self.size()))
             if self.group_method == 'random':
@@ -232,8 +235,8 @@ class Generator(object):
                 order.sort(key=lambda x: self.image_aspect_ratio(x))
 
             # divide into groups, one group = one batch
-            self.groups = [[order[x % len(order)] 
-                            for x in range(i, i + self.batch_size)] 
+            self.groups = [[order[x % len(order)]
+                            for x in range(i, i + self.batch_size)]
                            for i in range(0, len(order), self.batch_size)]
             self.group_index = 0
         else:
@@ -263,7 +266,7 @@ class Generator(object):
         """
         # get the max image shape
         max_shape = tuple(max(image.shape[x] for image in image_group) for x in range(3))
-        anchors   = self.generate_anchors(max_shape)
+        anchors = self.generate_anchors(max_shape)
 
         labels_batch, regression_batch, _ = self.compute_anchor_targets(
             anchors,
@@ -278,7 +281,7 @@ class Generator(object):
         """ Compute inputs and target outputs for the network.
         """
         # load images and annotations
-        image_group       = self.load_image_group(group)
+        image_group = self.load_image_group(group)
         annotations_group = self.load_annotations_group(group)
 
         # check validity of annotations
