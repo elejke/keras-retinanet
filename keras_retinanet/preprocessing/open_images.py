@@ -165,20 +165,8 @@ def generate_images_annotations_json(main_dir, metadata_dir, subset, cls_index, 
 
     if version == 'v4':
         annotations_path = os.path.join(metadata_dir, subset, '{}-annotations-bbox.csv'.format(subset))
-    elif version == 'vv4':
+    elif version == 'vv4' or version == 'challenge2018':
         return generate_images_annotations_json_vv4(metadata_dir, subset, cls_index, version=version)
-    elif version == 'challenge2018':
-        return generate_images_annotations_json_vv4(metadata_dir, subset, cls_index, version=version)
-        # validation_image_ids_path = os.path.join(metadata_dir, 'challenge-2018-image-ids-valset-od.csv')
-        #
-        # with open(validation_image_ids_path, 'r') as csv_file:
-        #     reader = csv.DictReader(csv_file, fieldnames=['ImageID'])
-        #     next(reader)
-        #     for line, row in enumerate(reader):
-        #         image_id = row['ImageID']
-        #         validation_image_ids[image_id] = True
-        #
-        # annotations_path = os.path.join(metadata_dir, 'challenge-2018-train-annotations-bbox.csv')
     else:
         annotations_path = os.path.join(metadata_dir, subset, 'annotations-human-bbox.csv')
 
