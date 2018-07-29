@@ -53,7 +53,7 @@ class Generator(object):
             transform_parameters=None,
             compute_anchor_targets=anchor_targets_bbox,
             compute_shapes=guess_shapes,
-            preprocess_image=preprocess_image,
+            preprocess_image_func=preprocess_image,
             generator_restore_path=None
     ):
         """ Initialize Generator object.
@@ -61,14 +61,18 @@ class Generator(object):
         Args
             transform_generator    : A generator used to randomly transform images and annotations.
             batch_size             : The size of the batches to generate.
-            group_method           : Determines how images are grouped together (defaults to 'ratio', one of ('none', 'random', 'ratio')).
+            group_method           : Determines how images are grouped together (defaults to 'ratio',
+                                                                                 one of ('none', 'random', 'ratio')).
             shuffle_groups         : If True, shuffles the groups each epoch.
             image_min_side         : After resizing the minimum side of an image is equal to image_min_side.
-            image_max_side         : If after resizing the maximum side is larger than image_max_side, scales down further so that the max side is equal to image_max_side.
+            image_max_side         : If after resizing the maximum side is larger than image_max_side, scales down
+                                     further so that the max side is equal to image_max_side.
             transform_parameters   : The transform parameters used for data augmentation.
-            compute_anchor_targets : Function handler for computing the targets of anchors for an image and its annotations.
+            compute_anchor_targets : Function handler for computing the targets of anchors for an image and its
+                                     annotations.
             compute_shapes         : Function handler for computing the shapes of the pyramid for a given input.
-            preprocess_image       : Function handler for preprocessing an image (scaling / normalizing) for passing through a network.
+            preprocess_image_func  : Function handler for preprocessing an image (scaling / normalizing) for passing
+                                     through a network.
         """
         self.transform_generator = transform_generator
         self.batch_size = int(batch_size)
@@ -79,9 +83,10 @@ class Generator(object):
         self.transform_parameters = transform_parameters or TransformParameters()
         self.compute_anchor_targets = compute_anchor_targets
         self.compute_shapes = compute_shapes
-        self.preprocess_image = preprocess_image
+        self.preprocess_image = preprocess_image_func
         self.generator_restore_path = generator_restore_path
 
+        self.groups = None
         self.group_index = 0
         self.lock = threading.Lock()
 
@@ -127,14 +132,14 @@ class Generator(object):
         """
         return [self.load_annotations(image_index) for image_index in group]
 
-    def filter_annotations(self, image_group, annotations_group, group):
+    @staticmethod
+    def filter_annotations(image_group, annotations_group, group):
         """ Filter annotations by removing those that are outside of the image bounds or whose width/height < 0.
         """
         # test all annotations
         for index, (image, annotations) in enumerate(zip(image_group, annotations_group)):
-            assert (isinstance(annotations,
-                               np.ndarray)), '\'load_annotations\' should return a list of numpy arrays, received: {}'.format(
-                type(annotations))
+            assert (isinstance(annotations, np.ndarray)),\
+                '\'load_annotations\' should return a list of numpy arrays, received: {}'.format(type(annotations))
 
             # test x2 < x1 | y2 < y1 | x1 < 0 | y1 < 0 | x2 <= 0 | y2 <= 0 | x2 >= image.shape[1] | y2 >= image.shape[0]
             invalid_indices = np.where(
