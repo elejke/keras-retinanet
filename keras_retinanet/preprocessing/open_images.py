@@ -140,12 +140,13 @@ def generate_images_annotations_json_vv4(metadata_dir, subset, cls_index, versio
         if subset == "validation":
             val_set = pd.read_csv(os.path.join(metadata_dir, 'challenge-2018-image-ids-valset-od.csv'))
             df_annotations = df_annotations.set_index('ImageID').loc[val_set.ImageID.values].reset_index(drop=False)
+
     elif version == 'vv4':
         annotations_path = os.path.join(metadata_dir, subset, '{}-annotations-bbox.csv'.format(subset))
         df_annotations = pd.read_csv(annotations_path)
     else:
         raise NotImplementedError
-
+    print(df_annotations.columns)
     df_annotations = df_annotations[["ImageID", "LabelName", "XMin", "XMax", "YMin", "YMax", "Width", "Height"]]
     df_annotations.columns = ["ImageID", "cls_id", "x1", "x2", "y1", "y2", "w", "h"]
     df_annotations["cls_id"] = df_annotations.cls_id.apply(lambda class_name: cls_index.get(class_name, class_name))
