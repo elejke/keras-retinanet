@@ -13,7 +13,7 @@ class TelegramCallback(Callback):
 
         self.telegram_logger.log(self.model_name + " model training started.")
 
-    def on_epoch_end(self, batch, logs={}):
+    def on_epoch_end(self, epoch, logs={}):
         try:
             self.telegram_logger.log("Model: " + self.model_name + ":\n loss: " + str(logs.get('loss')) +
                                      ";\n regression_loss: " + str(logs.get('regression_loss')) +
