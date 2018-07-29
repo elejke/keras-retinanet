@@ -134,7 +134,7 @@ def generate_images_annotations_json_vv4(metadata_dir, subset, cls_index, versio
         annotations_path = os.path.join(metadata_dir, 'challenge-2018-train-annotations-bbox.csv')
         # read the whole annotations for challenge2018
         df_annotations = pd.read_csv(annotations_path)
-        train_image_sizes = pd.read(metadata_dir, 'train_image_sizes.csv')
+        train_image_sizes = pd.read_csv(os.path.join(metadata_dir, 'train_image_sizes.csv'))
         df_annotations = df_annotations.merge(train_image_sizes, on="ImageID", how='left').dropna(axis=0)
         # for challenge2018 given validation subset of the training set:
         if subset == "validation":
