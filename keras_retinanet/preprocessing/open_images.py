@@ -139,7 +139,7 @@ def generate_images_annotations_json_vv4(metadata_dir, subset, cls_index, versio
         # for challenge2018 given validation subset of the training set:
         if subset == "validation":
             val_set = pd.read_csv(os.path.join(metadata_dir, 'challenge-2018-image-ids-valset-od.csv'))
-            df_annotations = df_annotations.set_index('ImageID').loc[val_set.ImageID.values]
+            df_annotations = df_annotations.set_index('ImageID').loc[val_set.ImageID.values].reset_index(drop=False)
     elif version == 'vv4':
         annotations_path = os.path.join(metadata_dir, subset, '{}-annotations-bbox.csv'.format(subset))
         df_annotations = pd.read_csv(annotations_path)
