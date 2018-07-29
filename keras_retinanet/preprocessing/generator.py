@@ -53,7 +53,7 @@ class Generator(object):
             transform_parameters=None,
             compute_anchor_targets=anchor_targets_bbox,
             compute_shapes=guess_shapes,
-            preprocess_image_func=preprocess_image,
+            preprocess_image=preprocess_image,
             generator_restore_path=None
     ):
         """ Initialize Generator object.
@@ -83,7 +83,7 @@ class Generator(object):
         self.transform_parameters = transform_parameters or TransformParameters()
         self.compute_anchor_targets = compute_anchor_targets
         self.compute_shapes = compute_shapes
-        self.preprocess_image = preprocess_image_func
+        self.preprocess_image = preprocess_image
         self.generator_restore_path = generator_restore_path
 
         self.groups = None
