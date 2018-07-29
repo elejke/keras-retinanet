@@ -27,16 +27,16 @@ import sys
 import os.path
 
 
-def _parse(value, function, fmt):
+def _parse(value, func, fmt):
     """
     Parse a string into a value, and format a nice ValueError if it fails.
 
-    Returns `function(value)`.
+    Returns `func(value)`.
     Any `ValueError` raised is catched and a new `ValueError` is raised
     with message `fmt.format(e)`, where `e` is the caught `ValueError`.
     """
     try:
-        return function(value)
+        return func(value)
     except ValueError as e:
         raise_from(ValueError(fmt.format(e)), None)
 

@@ -51,7 +51,8 @@ class KittiGenerator(Generator):
         """ Initialize a KITTI data generator.
 
         Args
-            base_dir: Directory w.r.t. where the files are to be searched (defaults to the directory containing the csv_data_file).
+            base_dir: Directory w.r.t. where the files are to be searched (defaults to the directory containing the
+            csv_data_file).
             subset: The subset to generate data for (defaults to 'train').
         """
         self.base_dir = base_dir
@@ -77,8 +78,8 @@ class KittiGenerator(Generator):
         """
 
         self.id_to_labels = {}
-        for label, id in kitti_classes.items():
-            self.id_to_labels[id] = label
+        for label, id_ in kitti_classes.items():
+            self.id_to_labels[id_] = label
 
         self.image_data = dict()
         self.images = []

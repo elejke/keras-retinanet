@@ -14,19 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import numpy as np
 import keras
+import numpy as np
 
 from ..utils.compute_overlap import compute_overlap
 
 
 def anchor_targets_bbox(
-    anchors,
-    image_group,
-    annotations_group,
-    num_classes,
-    negative_overlap=0.4,
-    positive_overlap=0.5
+        anchors,
+        image_group,
+        annotations_group,
+        num_classes,
+        negative_overlap=0.4,
+        positive_overlap=0.5
 ):
     """ Generate anchor targets for bbox detection.
 
@@ -41,11 +41,15 @@ def anchor_targets_bbox(
 
     Returns
         labels_batch: batch that contains labels & anchor states (np.array of shape (batch_size, N, num_classes + 1),
-                      where N is the number of anchors for an image and the last column defines the anchor state (-1 for ignore, 0 for bg, 1 for fg).
-        regression_batch: batch that contains bounding-box regression targets for an image & anchor states (np.array of shape (batch_size, N, 4 + 1),
-                      where N is the number of anchors for an image, the first 4 columns define regression targets for (x1, y1, x2, y2) and the
+                      where N is the number of anchors for an image and the last column defines the anchor state (-1
+                      for ignore, 0 for bg, 1 for fg).
+        regression_batch: batch that contains bounding-box regression targets for an image & anchor states (np.array of
+        shape (batch_size, N, 4 + 1),
+                      where N is the number of anchors for an image, the first 4 columns define regression targets
+                      for (x1, y1, x2, y2) and the
                       last column defines anchor states (-1 for ignore, 0 for bg, 1 for fg).
-        boxes_batch: box regression targets (np.array of shape (batch_size, N, num_classes + 1), where N is the number of anchors for an image)
+        boxes_batch: box regression targets (np.array of shape (batch_size, N, num_classes + 1), where N is the number
+                     of anchors for an image)
     """
 
     assert (len(image_group) == len(annotations_group)), "The length of the images and annotations need to be equal."
@@ -54,19 +58,21 @@ def anchor_targets_bbox(
     batch_size = len(image_group)
 
     regression_batch = np.zeros((batch_size, anchors.shape[0], 4 + 1), dtype=keras.backend.floatx())
-    labels_batch     = np.zeros((batch_size, anchors.shape[0], num_classes + 1), dtype=keras.backend.floatx())
-    boxes_batch      = np.zeros((batch_size, anchors.shape[0], annotations_group[0].shape[1]), dtype=keras.backend.floatx())
+    labels_batch = np.zeros((batch_size, anchors.shape[0], num_classes + 1), dtype=keras.backend.floatx())
+    boxes_batch = np.zeros((batch_size, anchors.shape[0], annotations_group[0].shape[1]), dtype=keras.backend.floatx())
 
     # compute labels and regression targets
     for index, (image, annotations) in enumerate(zip(image_group, annotations_group)):
         if annotations.shape[0]:
             # obtain indices of gt annotations with the greatest overlap
-            positive_indices, ignore_indices, argmax_overlaps_inds = compute_gt_annotations(anchors, annotations, negative_overlap, positive_overlap)
+            positive_indices, ignore_indices, argmax_overlaps_inds = compute_gt_annotations(anchors, annotations,
+                                                                                            negative_overlap,
+                                                                                            positive_overlap)
 
-            labels_batch[index, ignore_indices, -1]       = -1
-            labels_batch[index, positive_indices, -1]     = 1
+            labels_batch[index, ignore_indices, -1] = -1
+            labels_batch[index, positive_indices, -1] = 1
 
-            regression_batch[index, ignore_indices, -1]   = -1
+            regression_batch[index, ignore_indices, -1] = -1
             regression_batch[index, positive_indices, -1] = 1
 
             # compute box regression targets
@@ -83,17 +89,17 @@ def anchor_targets_bbox(
             anchors_centers = np.vstack([(anchors[:, 0] + anchors[:, 2]) / 2, (anchors[:, 1] + anchors[:, 3]) / 2]).T
             indices = np.logical_or(anchors_centers[:, 0] >= image.shape[1], anchors_centers[:, 1] >= image.shape[0])
 
-            labels_batch[index, indices, -1]     = - 1
+            labels_batch[index, indices, -1] = - 1
             regression_batch[index, indices, -1] = -1
 
     return labels_batch, regression_batch, boxes_batch
 
 
 def compute_gt_annotations(
-    anchors,
-    annotations,
-    negative_overlap=0.4,
-    positive_overlap=0.5
+        anchors,
+        annotations,
+        negative_overlap=0.4,
+        positive_overlap=0.5
 ):
     """ Obtain indices of gt annotations with the greatest overlap.
 
@@ -148,6 +154,7 @@ def layer_shapes(image_shape, model):
 def make_shapes_callback(model):
     """ Make a function for getting the shape of the pyramid levels.
     """
+
     def get_shapes(image_shape, pyramid_levels):
         shape = layer_shapes(image_shape, model)
         image_shapes = [shape["P{}".format(level)][1:3] for level in pyramid_levels]
@@ -172,13 +179,13 @@ def guess_shapes(image_shape, pyramid_levels):
 
 
 def anchors_for_shape(
-    image_shape,
-    pyramid_levels=None,
-    ratios=None,
-    scales=None,
-    strides=None,
-    sizes=None,
-    shapes_callback=None,
+        image_shape,
+        pyramid_levels=None,
+        ratios=None,
+        scales=None,
+        strides=None,
+        sizes=None,
+        shapes_callback=None,
 ):
     """ Generators anchors for a given shape.
 
@@ -212,9 +219,9 @@ def anchors_for_shape(
     # compute anchors over all pyramid levels
     all_anchors = np.zeros((0, 4))
     for idx, p in enumerate(pyramid_levels):
-        anchors         = generate_anchors(base_size=sizes[idx], ratios=ratios, scales=scales)
+        anchors = generate_anchors(base_size=sizes[idx], ratios=ratios, scales=scales)
         shifted_anchors = shift(image_shapes[idx], strides[idx], anchors)
-        all_anchors     = np.append(all_anchors, shifted_anchors, axis=0)
+        all_anchors = np.append(all_anchors, shifted_anchors, axis=0)
 
     return all_anchors
 
@@ -301,7 +308,7 @@ def bbox_transform(anchors, gt_boxes, mean=None, std=None):
     elif not isinstance(std, np.ndarray):
         raise ValueError('Expected std to be a np.ndarray, list or tuple. Received: {}'.format(type(std)))
 
-    anchor_widths  = anchors[:, 2] - anchors[:, 0]
+    anchor_widths = anchors[:, 2] - anchors[:, 0]
     anchor_heights = anchors[:, 3] - anchors[:, 1]
 
     targets_dx1 = (gt_boxes[:, 0] - anchors[:, 0]) / anchor_widths
