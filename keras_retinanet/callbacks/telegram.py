@@ -1,5 +1,8 @@
 import threading
 
+import telebot
+# https://github.com/eternnoir/pyTelegramBotAPI
+
 from keras.callbacks import Callback
 
 
@@ -49,8 +52,6 @@ class TelegramLogger(threading.Thread):
         """
         # parent constructor
         super(TelegramLogger, self).__init__()
-        # import telegram bot api:
-        import telebot
 
         self.config = config
         self.use_proxy = use_proxy
