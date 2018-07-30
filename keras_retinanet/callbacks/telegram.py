@@ -5,21 +5,35 @@ from keras.callbacks import Callback
 
 # custom telegram logger callback:
 class TelegramCallback(Callback):
+    
     def __init__(self, model_name, config):
+        
         super().__init__()
+        
         self.model_name = model_name
         self.config = config
+        
         self.telegram_logger = TelegramLogger(self.config)
-
-        self.telegram_logger.log(self.model_name + " model training started.")
-
+        self.telegram_logger.log("Model: " + self.model_name + "\n\nstarted")
+    
     def on_epoch_end(self, epoch, logs={}):
-        try:
-            self.telegram_logger.log("Model: " + self.model_name + ":\n loss: " + str(logs.get('loss')) +
-                                     ";\n regression_loss: " + str(logs.get('regression_loss')) +
-                                     ";\n classification_loss: " + str(logs.get('classification_loss')))
-        except:
-            print("No response from proxy server")
+        
+        success = False
+        counter = 0
+        
+        while (not success) and (counter < 10):
+            try:
+                self.telegram_logger.log("Model: " + self.model_name + 
+                                         "\n\nEpoch: " + str(epoch + 1) + 
+                                         "\n\nTotal loss: " + str(logs.get("loss")) + 
+                                         "\nRegression loss: " + str(logs.get("regression_loss")) + 
+                                         "\nClassification loss: " + str(logs.get("classification_loss")))
+                success = True
+            except:
+                counter += 1
+        
+        if not sucess:
+            print("Telegram logger error")
 
 
 class TelegramLogger(threading.Thread):
