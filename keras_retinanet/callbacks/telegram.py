@@ -26,10 +26,10 @@ class TelegramLogger(threading.Thread):
     """ Logger which redirects all the incoming messages into specified telegram bot.
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config, use_proxy=False):
         """ Constructor. Create TeleBot instance and launch it in the separate thread.
         Args:
-            config(str): path to the json file with the telegram chat token
+            config(dict): dict with the telegram bot token and default chat id
         Return:
             None
         """
@@ -37,11 +37,12 @@ class TelegramLogger(threading.Thread):
         super(TelegramLogger, self).__init__()
         # import telegram bot api:
         import telebot
-        from telebot import apihelper
 
         self.config = config
-        # example: apihelper.proxy = {'https':'socks5://54.37.234.65:8081'}
-        apihelper.proxy = {'https': 'socks5://' + str(self.config["proxy_ip"]) + ':' + str(self.config["proxy_port"])}
+        self.use_proxy = use_proxy
+        if self.use_proxy:
+            from telebot import apihelper
+            apihelper.proxy = {'https': 'socks5://' + str(self.config["proxy_ip"]) + ':' + str(self.config["proxy_port"])}
         # create bot
         self._bot = telebot.TeleBot(self.config["token"])
         # chat id to send messages to
