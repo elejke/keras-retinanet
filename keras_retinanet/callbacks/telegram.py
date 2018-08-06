@@ -9,14 +9,15 @@ from keras.callbacks import Callback
 # custom telegram logger callback:
 class TelegramCallback(Callback):
     
-    def __init__(self, model_name, config):
+    def __init__(self, model_name, config, use_proxy=False):
         
         super().__init__()
         
         self.model_name = model_name
         self.config = config
+        self.use_proxy = use_proxy
         
-        self.telegram_logger = TelegramLogger(self.config)
+        self.telegram_logger = TelegramLogger(self.config, self.use_proxy)
         self.telegram_logger.log("Model: " + self.model_name + "\n\nstarted")
     
     def on_epoch_end(self, epoch, logs={}):
