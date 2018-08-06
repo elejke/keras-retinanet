@@ -35,7 +35,7 @@ class TelegramCallback(Callback):
             except:
                 counter += 1
         
-        if not sucess:
+        if not success:
             print("Telegram logger error")
 
 
